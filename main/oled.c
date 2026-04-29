@@ -6,8 +6,16 @@
 #include "oled.h"
 #include "oled_cmd_table.h"
 
+/*
+ * Private OLED device handle.
+ * oled_init() stores the handle here so the remaining OLED functions can use it.
+ */
 static i2c_master_dev_handle_t oled_dev_handle = NULL;
 
+/*
+ * Sends one SSD1306 command byte.
+ * Control byte 0x00 tells the OLED that the next byte is a command.
+ */
 static esp_err_t oled_write_cmd(uint8_t cmd)
 {
     if (oled_dev_handle == NULL)
@@ -33,6 +41,10 @@ static esp_err_t oled_write_cmd(uint8_t cmd)
     return ESP_OK;
 }
 
+/*
+ * Sends display data bytes to the OLED.
+ * Control byte 0x40 tells the OLED that following bytes are pixel data.
+ */
 static esp_err_t oled_write_data(const uint8_t *data, size_t len)
 {
     if (oled_dev_handle == NULL || data == NULL)
@@ -40,6 +52,10 @@ static esp_err_t oled_write_data(const uint8_t *data, size_t len)
         return ESP_ERR_INVALID_ARG;
     }
 
+    /*
+     * One OLED page is 128 columns.
+     * Extra byte at index 0 is the SSD1306 control byte.
+     */
     uint8_t buffer[OLED_WIDTH + 1];
 
     if (len > OLED_WIDTH)
@@ -63,6 +79,10 @@ static esp_err_t oled_write_data(const uint8_t *data, size_t len)
     return ESP_OK;
 }
 
+/*
+ * Initializes the SSD1306 OLED.
+ * The main init sequence is stored in oled_cmd_table.c and sent using a loop.
+ */
 esp_err_t oled_init(i2c_master_dev_handle_t dev_handle)
 {
     if (dev_handle == NULL)
@@ -74,7 +94,7 @@ esp_err_t oled_init(i2c_master_dev_handle_t dev_handle)
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    esp_err_t ret = oled_write_cmd(0xAE);   // Display OFF
+    esp_err_t ret = oled_write_cmd(0xAE);   /* Display OFF */
 
     if (ret != ESP_OK)
     {
@@ -95,7 +115,7 @@ esp_err_t oled_init(i2c_master_dev_handle_t dev_handle)
 
     vTaskDelay(pdMS_TO_TICKS(20));
 
-    ret = oled_write_cmd(0xAF);   // Display ON
+    ret = oled_write_cmd(0xAF);   /* Display ON */
 
     if (ret != ESP_OK)
     {
@@ -107,6 +127,10 @@ esp_err_t oled_init(i2c_master_dev_handle_t dev_handle)
     return ESP_OK;
 }
 
+/*
+ * Clears all 8 OLED pages.
+ * 128x64 OLED = 8 pages, each page is 8 pixels high and 128 columns wide.
+ */
 esp_err_t oled_clear(void)
 {
     uint8_t zeros[OLED_WIDTH];
@@ -148,6 +172,10 @@ esp_err_t oled_clear(void)
     return ESP_OK;
 }
 
+/*
+ * Sets the current OLED page and column.
+ * page selects vertical 8-pixel row group, col selects horizontal position.
+ */
 esp_err_t oled_set_cursor(uint8_t page, uint8_t col)
 {
     if (page > 7 || col >= OLED_WIDTH)
@@ -162,6 +190,10 @@ esp_err_t oled_set_cursor(uint8_t page, uint8_t col)
         return ret;
     }
 
+    /*
+     * SSD1306 column address is split into lower nibble and upper nibble.
+     * Bit masking extracts the required 4-bit parts.
+     */
     ret = oled_write_cmd((uint8_t)(0x00 + (col & 0x0F)));
 
     if (ret != ESP_OK)
@@ -179,6 +211,10 @@ esp_err_t oled_set_cursor(uint8_t page, uint8_t col)
     return ESP_OK;
 }
 
+/*
+ * Draws a simple horizontal bar on one OLED page.
+ * Each 0xFF byte turns on 8 vertical pixels in that column.
+ */
 esp_err_t oled_draw_bar(uint8_t page, uint8_t width)
 {
     uint8_t data[OLED_WIDTH];
