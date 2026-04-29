@@ -1,0 +1,50 @@
+# ESP-IDF build output
+build/
+sdkconfig
+sdkconfig.old
+managed_components/
+.espressif/
+
+# CMake and compilation databases
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# Firmware and object artifacts
+*.bin
+*.elf
+*.map
+*.o
+*.obj
+*.a
+*.out
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Editor and workspace-local files
+.vscode/
+.idea/
+.ccls-cache/
+*.user
+*.workspace
+*.suo
+*.sln.docstates
+
+# OS and temp files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+*.tmp
+*.bak
+*.log
